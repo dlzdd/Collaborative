@@ -1,0 +1,77 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"  // 使用 PostgreSQL 数据库
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  hash      String
+  tasks     Task[]    // 用户创建的任务
+  teams     Team[]    @relation("TeamMembers") // 用户所在的团队（通过多对多关系）
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+// 用户创建的任务，关联到 TaskCreator
+  createdTasks Task[] @relation("TaskCreator")
+
+  // 用户作为负责人分配的任务，关联到 TaskAssignee
+  assignedTasks Task[] @relation("TaskAssignee")
+
+  Team Team[]
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  dueDate     DateTime
+  priority    TaskPriority
+  status      TaskStatus
+  createdById Int       // 创建任务的用户（即任务的拥有者）
+  assigneeId  Int?      // 被分配任务的用户（如果有）
+  createdBy   User      @relation("TaskCreator", fields: [createdById], references: [id])
+  assignee    User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  User User[]
+
+  Team Team[] @relation("TeamTasks")
+}
+
+model Team {
+  id        Int       @id @default(autoincrement())
+  name      String
+  ownerId   Int       // 团队创建者（管理员）
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // 团队成员：通过多对多关系
+  members   User[]    @relation("TeamMembers")
+
+  // 外键：团队管理员
+  owner     User      @relation(fields: [ownerId], references: [id])
+
+  // 团队中的任务（任务分配给团队成员）
+  tasks     Task[]    @relation("TeamTasks")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
