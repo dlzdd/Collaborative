@@ -6,11 +6,11 @@ import { AuthGuard } from './auth.guard';
 @Controller('auth')
 export class UserController {
     constructor(private userService: UserService) {}
-    @Post('signup')
+    @Post('signUp')
     async signUp(@Body() dto: AuthDto){
         return this.userService.signUp(dto)
     }
-    @UseGuards(AuthGuard)
+    // @UseGuards(AuthGuard)
     @Post('signIn') 
     async signIn(@Body() dto: AuthDto) {
         return this.userService.signIn(dto)

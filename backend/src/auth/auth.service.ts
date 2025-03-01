@@ -13,6 +13,14 @@ export class UserService {
     private config: ConfigService,
   ) {}
   async signUp(dto: AuthDto) {
+    // 检查邮箱是否已经存在
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existingUser) {
+      throw new ForbiddenException('该邮箱已被注册');
+    }
     const hash = await argon2.hash(dto.password);
     return this.prisma.user.create({
       data: {
@@ -50,4 +58,5 @@ export class UserService {
     return {
       access_token: token,
     };
-  }}
+  }
+}
